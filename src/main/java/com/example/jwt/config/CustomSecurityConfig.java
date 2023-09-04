@@ -2,7 +2,9 @@ package com.example.jwt.config;
 
 import com.example.jwt.security.APIUserDetailService;
 import com.example.jwt.security.filter.APILoginFilter;
+import com.example.jwt.security.filter.TokenCheckFilter;
 import com.example.jwt.security.handler.APILoginSuccessHandler;
+import com.example.jwt.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -29,6 +31,10 @@ public class CustomSecurityConfig {
 
     //주입
     private final APIUserDetailService apiUserDetailService;
+
+
+    private final JWTUtil jwtUtill;
+
 
     @Bean
     public PasswordEncoder passwordEncoder(){
@@ -63,8 +69,7 @@ public class CustomSecurityConfig {
         apiLoginFilter.setAuthenticationManager(authenticationManager);
 
         //APILoginSuccessHandler
-        APILoginSuccessHandler successHandler = new APILoginSuccessHandler();
-
+        APILoginSuccessHandler successHandler = new APILoginSuccessHandler(jwtUtill);
         //SuccessHandler 세팅
         apiLoginFilter.setAuthenticationSuccessHandler(successHandler);
 
@@ -72,8 +77,18 @@ public class CustomSecurityConfig {
         //APILoginFilter의 위치 조정
         http.addFilterBefore(apiLoginFilter, UsernamePasswordAuthenticationFilter.class);
 
+        //api로 시작하는 모든 경로는 TokenCheckFilter 동작
+        http.addFilterBefore(
+                tokenCheckFiler(jwtUtill),
+                UsernamePasswordAuthenticationFilter.class
+        );
+
+
         http.csrf().disable(); // csrf 비활성화
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);// 세션을 사용하지 않음
         return http.build();
+    }
+    private TokenCheckFilter tokenCheckFiler(JWTUtil jwtUtil){
+        return new TokenCheckFilter(jwtUtil);
     }
 }
