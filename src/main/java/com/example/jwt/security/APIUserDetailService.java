@@ -32,6 +32,7 @@ public class APIUserDetailService implements UserDetailsService {
                 apiUser.getMid(),
                 apiUser.getMpw(),
                 List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
         log.info(dto);
         return dto;
     }
