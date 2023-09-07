@@ -2,6 +2,7 @@ package com.example.jwt.config;
 
 import com.example.jwt.security.APIUserDetailService;
 import com.example.jwt.security.filter.APILoginFilter;
+import com.example.jwt.security.filter.RefreshTokenFilter;
 import com.example.jwt.security.filter.TokenCheckFilter;
 import com.example.jwt.security.handler.APILoginSuccessHandler;
 import com.example.jwt.util.JWTUtil;
@@ -85,6 +86,9 @@ public class CustomSecurityConfig {
                 tokenCheckFiler(jwtUtill),
                 UsernamePasswordAuthenticationFilter.class
         );
+        //refreshToken 호출 처리
+        http.addFilterBefore(new RefreshTokenFilter("/refreshToken",jwtUtill),
+                TokenCheckFilter.class);
 
         // CSRF 공격 방지 기능 비활성화 (일반적으로 RESTful API에서 사용하지 않음)
         http.csrf().disable();
