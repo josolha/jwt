@@ -35,10 +35,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class CustomSecurityConfig {
 
     // 주입된 사용자 상세 서비스
-    private final APIUserDetailService apiUserDetailService;
+    private final APIUserDetailService apiUserDetailsService;
 
     // 주입된 JWT 유틸리티
-    private final JWTUtil jwtUtill;
+    private final JWTUtil jwtUtil;
 
     // 비밀번호 암호화 방식을 BCrypt로 설정
     @Bean
@@ -65,7 +65,7 @@ public class CustomSecurityConfig {
 
         // 사용자 상세 서비스 및 비밀번호 암호화 방식 설정
         authenticationManagerBuilder
-                .userDetailsService(apiUserDetailService)
+                .userDetailsService(apiUserDetailsService)
                 .passwordEncoder(passwordEncoder());
 
         // AuthenticationManager 인스턴스 생성
@@ -79,7 +79,7 @@ public class CustomSecurityConfig {
         apiLoginFilter.setAuthenticationManager(authenticationManager);
 
         // 로그인 성공 핸들러 설정
-        APILoginSuccessHandler successHandler = new APILoginSuccessHandler(jwtUtill);
+        APILoginSuccessHandler successHandler = new APILoginSuccessHandler(jwtUtil);
         apiLoginFilter.setAuthenticationSuccessHandler(successHandler);
 
         // 기존의 UsernamePasswordAuthenticationFilter 이전에 apiLoginFilter 추가
@@ -87,11 +87,12 @@ public class CustomSecurityConfig {
 
         // "api"로 시작하는 모든 경로에 대한 토큰 검사 필터 추가
         http.addFilterBefore(
-                tokenCheckFiler(jwtUtill),
+                tokenCheckFilter(jwtUtil, apiUserDetailsService),
                 UsernamePasswordAuthenticationFilter.class
         );
+
         //refreshToken 호출 처리
-        http.addFilterBefore(new RefreshTokenFilter("/refreshToken",jwtUtill),
+        http.addFilterBefore(new RefreshTokenFilter("/refreshToken",jwtUtil),
                 TokenCheckFilter.class);
 
         // CSRF 공격 방지 기능 비활성화 (일반적으로 RESTful API에서 사용하지 않음)
@@ -103,10 +104,6 @@ public class CustomSecurityConfig {
         return http.build();
     }
 
-    // JWT 토큰 검사를 위한 필터 생성 메서드
-    private TokenCheckFilter tokenCheckFiler(JWTUtil jwtUtil) {
-        return new TokenCheckFilter(jwtUtil);
-    }
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -118,12 +115,13 @@ public class CustomSecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+    // JWT 토큰 검사를 위한 필터 생성 메서드
+    private TokenCheckFilter tokenCheckFilter(JWTUtil jwtUtil, APIUserDetailService apiUserDetailsService){
+        return new TokenCheckFilter(apiUserDetailsService, jwtUtil);
+    }
 
 
-//    private TokenCheckFilter tokenCheckFilter(JWTUtil jwtUtil, APIUserDetailsService apiUserDetailsService){
-//
-//        return new TokenCheckFilter(apiUserDetailsService, jwtUtil);
-//    }
+
 
 }
 

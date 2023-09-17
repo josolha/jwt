@@ -1,5 +1,6 @@
 package com.example.jwt.security.filter;
 
+import com.example.jwt.security.APIUserDetailService;
 import com.example.jwt.security.exception.AccessTokenException;
 import com.example.jwt.util.JWTUtil;
 import java.io.IOException;
@@ -14,11 +15,16 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Log4j2
 @RequiredArgsConstructor
 public class TokenCheckFilter extends OncePerRequestFilter {
+
+    private final APIUserDetailService apiUserDetailsService;
     private final JWTUtil jwtUtil;
 
     @Override
@@ -35,9 +41,25 @@ public class TokenCheckFilter extends OncePerRequestFilter {
         log.info("JWTUtil : "+jwtUtil);
 
         try{
-            validateAccessToken(request);
+
+            Map<String, Object> payload = validateAccessToken(request);
+
+            //mid
+            String mid = (String)payload.get("mid");
+
+            log.info("mid: " + mid);
+
+            UserDetails userDetails = apiUserDetailsService.loadUserByUsername(mid);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
             filterChain.doFilter(request,response);
-        }catch (AccessTokenException accessTokenException){
+        }catch(AccessTokenException accessTokenException){
             accessTokenException.sendResponseError(response);
         }
 
