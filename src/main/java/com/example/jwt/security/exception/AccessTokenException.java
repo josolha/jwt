@@ -13,7 +13,7 @@ public class AccessTokenException extends RuntimeException{
 
         UNACCEPT(401, "Token is null or too short"),
         BADTYPE(401, "Token type Bearer"),
-        MALFORM(403, "MAlformed Token"),
+        MALFORM(403, "Malformed Token"),
         BADSIGN(403, "BadSignatured Token"),
         EXPIRED(403, "Expired Token");
 

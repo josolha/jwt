@@ -23,10 +23,8 @@
     document.querySelector(".refreshOld").innerHTML = oldRefreshToken; // 수정된 부분
 
     document.querySelector(".btn1").addEventListener("click", () => {
-        axios.post('https://localhost:8080/refreshToken', {
-            accessToken: oldAccessToken,
-            refreshToken: oldRefreshToken // 수정된 부분
-        })
+        axios.post('http://localhost:8081/refreshToken',
+            {accessToken: oldAccessToken, refreshToken: oldRefreshToken})
             .then(res => {
                 console.log(res.data);
 
@@ -40,8 +38,9 @@
             })
             .catch(error => {
                 console.error(error);
-            });
-    });
+            }
+        )
+    },false);
 </script>
 </body>
 </html>
